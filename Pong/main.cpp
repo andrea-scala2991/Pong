@@ -1,19 +1,24 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <windows.h>
 
-int main()
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-    sf::RenderWindow window(sf::VideoMode(1000,800), "Pong");
+    sf::RenderWindow window(sf::VideoMode(1000, 800), "Pong");
     sf::Event event;
-    sf::RectangleShape paddle1(sf::Vector2f(20.f,115.f));
+    sf::RectangleShape paddle1(sf::Vector2f(20.f, 115.f));
     sf::RectangleShape paddle2(sf::Vector2f(20.f, 115.f));
-    sf::RectangleShape button(sf::Vector2f(100.f,50.f));
+    sf::RectangleShape button(sf::Vector2f(100.f, 50.f));
     sf::CircleShape ball(5.f);
+    float ballSpeedx = 0,ballSpeedy = 0;
     sf::Color softblack(24, 26, 24);
     sf::Font font;
-    sf::Text mainText,buttonText;
+    sf::Text mainText,buttonText,winner;
     sf::Image icon;
+    sf::SoundBuffer sb;
+    sf::Sound pong;
 
+    srand(time(NULL));
     bool gameStart = false;
 
     if (!icon.loadFromFile("../icon.png")) {
@@ -38,7 +43,12 @@ int main()
     mainText.setString("PONG");
     mainText.setCharacterSize(100);
     mainText.setFillColor(sf::Color::Red);
-    mainText.setPosition(320.f,150.f);
+    mainText.setPosition(320.f, 150.f);
+
+    winner.setFont(font);
+    winner.setCharacterSize(40);
+    winner.setFillColor(sf::Color::Red);
+    winner.setPosition(250.f, 200.f);
 
     buttonText.setFont(font);
     buttonText.setString("play");
@@ -50,31 +60,79 @@ int main()
     button.setOutlineThickness(10.f);
     button.setOutlineColor(sf::Color(40,40,40));
     button.setFillColor(sf::Color::Red);
-    button.setPosition(450.f,370.f);
+    button.setPosition(450.f, 370.f);
 
     ball.setFillColor(sf::Color::Yellow);
-    ball.setPosition(495.f,395.f);
+    ball.setPosition(495.f, 395.f);
+
+    sb.loadFromFile("../collision.wav");
+    pong.setBuffer(sb);
 
     while (window.isOpen())
     {
         while (window.pollEvent(event))
-        {
-            if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && sf::Mouse::getPosition(window).x > 460.f &&
+        {   //button press
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left)&& sf::Mouse::getPosition(window).x > 460.f &&
                 sf::Mouse::getPosition(window).x < 540.f && sf::Mouse::getPosition(window).y > 380.f && sf::Mouse::getPosition(window).y < 410)
                 gameStart = true;
-
+            //close window
             if (event.type == sf::Event::Closed)
                 window.close();
-
+            //pause while playing pressing esc
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
                 gameStart = false;
-
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && paddle1.getPosition().y < 685.f)
-                paddle1.move(0.f,10.f);
-
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && paddle1.getPosition().y >= 10.f)
-                paddle1.move(0.f, -10.f);
         }
+        //paddles movement(outside of event listener to avoid delay while pressing keys for longer)
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) && paddle1.getPosition().y < 685.f)
+            paddle1.move(0.f, 10.f);
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && paddle1.getPosition().y >= 10.f)
+            paddle1.move(0.f, -10.f);
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) && paddle2.getPosition().y < 685.f)
+            paddle2.move(0.f, 10.f);
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && paddle2.getPosition().y >= 10.f)
+            paddle2.move(0.f, -10.f);
+
+        //start moving the ball
+        if (gameStart && ballSpeedx == 0) {
+            //set horizontal speed
+            ballSpeedx = rand() % 2;
+            if (ballSpeedx == 0)
+                ballSpeedx = -1;
+            //set vertical speed
+            ballSpeedy = rand() % 2;
+            if (ballSpeedy == 0)
+                ballSpeedy = -1;
+        }
+        else if (gameStart && ballSpeedx != 0) {
+            //bounce when hitting top or bottom wall
+            if (ball.getGlobalBounds().top <= 0 || ball.getGlobalBounds().top + ball.getGlobalBounds().height >= 800) {
+                ballSpeedy = -ballSpeedy;
+                pong.play();
+            }
+            else if (paddle1.getGlobalBounds().contains(ball.getPosition()) || paddle2.getGlobalBounds().contains(ball.getPosition())) {
+                ballSpeedx = -ballSpeedx;
+                pong.play();
+            }
+            else if (ball.getGlobalBounds().left <= 0)
+                winner.setString("Player 2 wins");
+            else if (ball.getGlobalBounds().left + ball.getGlobalBounds().width >= 1000)
+                winner.setString("Player 1 wins");
+
+            ball.move(ballSpeedx, ballSpeedy);
+            if (ballSpeedx < 0)
+                ballSpeedx -= 0.01;
+            else
+                ballSpeedx += 0.01;
+            if (ballSpeedy < 0)
+                ballSpeedy -= 0.01;
+            else
+                ballSpeedy += 0.01;
+
+        }
+
         //"pause" menu
         if (!gameStart) {
             window.clear(softblack);
@@ -83,7 +141,13 @@ int main()
             window.draw(buttonText);
             window.display();
         }
-        else {//start the game
+        else if (!winner.getString().isEmpty()) {
+            //win screen
+            window.clear(softblack);
+            window.draw(winner);
+            window.display();
+        }
+        else {//game stage
             window.clear(softblack);
             window.draw(paddle1);
             window.draw(paddle2);
