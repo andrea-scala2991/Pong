@@ -21,6 +21,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     srand(time(NULL));
     bool gameStart = false,win = false;
 
+    
+
     if (!icon.loadFromFile("../icon.png")) {
         MessageBox(NULL, (LPCWSTR)L"couldn't find window icon", NULL, MB_OK);
         return EXIT_FAILURE;
