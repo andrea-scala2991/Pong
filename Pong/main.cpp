@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <windows.h>
+#include <filesystem>
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
@@ -21,9 +22,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     srand(time(NULL));
     bool gameStart = false,win = false;
 
-    
-
-    if (!icon.loadFromFile("../icon.png")) {
+    if (!icon.loadFromFile("icon.png")) {
         MessageBox(NULL, (LPCWSTR)L"couldn't find window icon", NULL, MB_OK);
         return EXIT_FAILURE;
     }
@@ -37,7 +36,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     paddle2.setFillColor(sf::Color::Yellow);
     paddle2.setPosition(930.f, 342.5);
 
-    if (!font.loadFromFile("../Akira Expanded Demo.ttf")) {
+    if (!font.loadFromFile("Akira Expanded Demo.ttf")) {
         MessageBox(NULL, (LPCWSTR)L"couldn't find font file", NULL, MB_OK);
         return EXIT_FAILURE;
     }
@@ -85,7 +84,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     ball.setFillColor(sf::Color::Yellow);
     ball.setPosition(495.f, 395.f);
 
-    sb.loadFromFile("../collision.wav");
+    sb.loadFromFile("collision.wav");
     pong.setBuffer(sb);
 
     while (window.isOpen())
